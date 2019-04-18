@@ -1,0 +1,99 @@
+<project>
+	<groupId>cl.citiaps.sparkjava</groupId>
+	<artifactId>dimerc-recommender</artifactId>
+	<modelVersion>4.0.0</modelVersion>
+	<name>Dimerc Recommender</name>
+	<packaging>jar</packaging>
+	<version>1.0</version>
+	
+	<dependencies>
+		
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-csv</artifactId>
+			<version>1.4</version>
+		</dependency>
+		
+<!--		<dependency>-->
+<!--			<groupId>org.apache.lucene</groupId>-->
+<!--			<artifactId>lucene-core</artifactId>-->
+<!--			<version>7.7.1</version>-->
+<!--		</dependency>-->
+<!--		-->
+<!--		<dependency>-->
+<!--			<groupId>org.apache.lucene</groupId>-->
+<!--			<artifactId>lucene-analyzers-common</artifactId>-->
+<!--			<version>7.7.1</version>-->
+<!--		</dependency>-->
+<!--		-->
+<!--		<dependency>-->
+<!--			<groupId>org.apache.lucene</groupId>-->
+<!--			<artifactId>lucene-queryparser</artifactId>-->
+<!--			<version>7.7.1</version>-->
+<!--		</dependency>-->
+
+	</dependencies>
+	
+	<properties>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+	</properties>
+	
+	<build>
+		<sourceDirectory>src</sourceDirectory>
+		
+		<!-- Configuracion detallada para jar-with-dependencies -->
+		<plugins>
+			
+			<!-- Plugin para agregar bibliotecas de external_libs/ (por ejemplo, para oracle) -->
+<!--			<plugin>-->
+<!--				<groupId>com.googlecode.addjars-maven-plugin</groupId>-->
+<!--				<artifactId>addjars-maven-plugin</artifactId>-->
+<!--				<version>1.0.5</version>-->
+<!--				<executions>-->
+<!--					<execution>-->
+<!--					<goals>-->
+<!--						<goal>add-jars</goal>-->
+<!--					</goals>-->
+<!--					<configuration>-->
+<!--						<resources>-->
+<!--							<resource>-->
+<!--								<directory>${basedir}/external_libs</directory>-->
+<!--							</resource>-->
+<!--						</resources>-->
+<!--					</configuration>-->
+<!--					</execution>-->
+<!--				</executions>-->
+<!--			</plugin>-->
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<version>2.4.1</version>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+					<descriptorRefs>
+						<descriptorRef>jar-with-dependencies</descriptorRef>
+					</descriptorRefs>
+					<archive>
+						<manifest>
+							<mainClass>cl.citiaps.clustering.ClusteringTest</mainClass>
+						</manifest>
+					</archive>
+				</configuration>
+				<executions>
+					<execution>
+						<id>make-assembly</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+
+	</build>
+	
+</project>
