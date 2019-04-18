@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.HashMap;
 import java.util.Comparator;
 import java.util.Collections;
 import java.util.List;
@@ -31,23 +32,29 @@ public class ClusteringTest {
 	public static void main(String[] args) {
 		
 		String data_file_sells = null;
-		String output_file = null;
+//		String output_file = null;
 		
-		if( args.length == 2 ){
+		if( args.length == 1 ){
 			data_file_sells = args[0];
-			output_file = args[1];
+//			output_file = args[1];
 		}
 		else{
 			System.out.println("Modo de Uso:");
-			System.out.println(">java [-cp \"libs.jar:.\"] cl.citiaps.clustering.ClusteringTest data_sells.csv output.csv");
+			System.out.println(">java [-cp \"libs.jar:.\"] cl.citiaps.clustering.ClusteringTest data_sells.csv");
 			return;
 		}
 		
 		System.out.println("Preparando Mapa de Ventas \"" + data_file_sells + "\"");
 		
-		// Mapa de Ventas
+		// Datos para primera version de clustering:
+		// Usuario (RUT) -> Mapa de productos (SKU -> Cantidad)
+		// La cantidad por producto puede ser la cantidad promedio de cada producto POR venta
+		// Para eso se necesita un mapa temporal de total de compras por cliente
+		// Esto es para ser tratados como Conjuntos
 		Map<String, Set<Integer>> client_sells_map = new TreeMap<String, Set<Integer>>();
-		Map<Integer, Integer> sells_total_map = new TreeMap<Integer, Integer>();
+		Map<String, Map<String, Float>> clients_data_map = new HashMap<String, Map<String, Float>>();
+		
+		// Mapa de Ventas
 		try {
 			Reader lector = new FileReader(data_file_sells);
 			Iterable<CSVRecord> records = CSVFormat.RFC4180.parse(lector);
@@ -71,22 +78,43 @@ public class ClusteringTest {
 				if( compra == 0 ){
 					continue;
 				}
-				if( rutcli.equals("9994800") ){
-					System.out.println("Agregando " + rutcli + " " + compra + " " + sku + " " + costo + " " + " " + neto);
-				}
+				
 				client_sells_map.putIfAbsent(rutcli, new TreeSet<Integer>());
 				client_sells_map.get(rutcli).add(compra);
-				sells_total_map.putIfAbsent(compra, 0);
-				sells_total_map.put(compra, sells_total_map.get(compra) + neto);
-				if( rutcli.equals("9994800") ){
-					System.out.println("Resultado compra " + compra + " : " + sells_total_map.get(compra));
-				}
+				
+				clients_data_map.putIfAbsent(rutcli, new TreeMap<String, Float>());
+				Map<String, Float> products = clients_data_map.get(rutcli);
+				products.putIfAbsent(sku, 0.0f);
+				products.put(sku, products.get(sku) + cantidad);
+				
 			}
 			lector.close();
 		}
 		catch (IOException e) {
 			e.printStackTrace();
 		}
+		
+		// Normalizacion de Cantidades por compra
+		for( Map.Entry<String, Set<Integer>> client_pair : client_sells_map.entrySet() ){
+			String rut = client_pair.getKey();
+			Set<Integer> sells = client_pair.getValue();
+			System.out.println("Compras de cliente " + rut + " (" + sells.size() + ")");
+			Map<String, Float> products = clients_data_map.get(rut);
+			for( Map.Entry<String, Float> prod : products.entrySet() ){
+				prod.setValue( prod.getValue() / sells.size());
+				System.out.println(prod.getKey() + " : " + prod.getValue());
+			}
+		}
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
 		
 		
 		
