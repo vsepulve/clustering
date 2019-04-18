@@ -25,26 +25,54 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 
+import cl.citiaps.clustering.model.*;
+
 public class ClusteringTest {
 	
 	private ClusteringTest() {}
-
+	
 	public static void main(String[] args) {
 		
-		String data_file_sells = null;
-//		String output_file = null;
+		int min_compras = 6;
+		int min_productos = 6;
+		int sampling = 1000000;
+		int data_type = 1;
 		
-		if( args.length == 1 ){
-			data_file_sells = args[0];
-//			output_file = args[1];
+		String data_sells_file = null;
+		String data_products_file = null;
+		
+		if( args.length == 4 ){
+			data_sells_file = args[0];
+			data_products_file = args[1];
+			sampling = new Integer(args[2]);
+			data_type = new Integer(args[3]);
 		}
 		else{
 			System.out.println("Modo de Uso:");
-			System.out.println(">java [-cp \"libs.jar:.\"] cl.citiaps.clustering.ClusteringTest data_sells.csv");
+			System.out.println(">java [-cp \"libs.jar:.\"] cl.citiaps.clustering.ClusteringTest data_sells.csv data_products.csv MAX_SAMPLING DATA_TYPE");
 			return;
 		}
 		
-		System.out.println("Preparando Mapa de Ventas \"" + data_file_sells + "\"");
+		System.out.println("Cargando Productos de \"" + data_products_file + "\"");
+		
+		Map<String, Product> products_map = new HashMap<String, Product>();
+		try {
+			Reader lector = new FileReader(data_products_file);
+			Iterable<CSVRecord> records = CSVFormat.RFC4180.parse(lector);
+			for (CSVRecord record : records) {
+				String sku = record.get(0);
+				String codjer = record.get(1);
+				String nombre = record.get(2);
+				String linea = record.get(3);
+				products_map.put(sku, new Product(sku, nombre, linea, codjer));
+			}
+			lector.close();
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		System.out.println("Preparando Mapa de Ventas \"" + data_sells_file + "\"");
 		
 		// Datos para primera version de clustering:
 		// Usuario (RUT) -> Mapa de productos (SKU -> Cantidad)
@@ -53,10 +81,8 @@ public class ClusteringTest {
 		// Esto es para ser tratados como Conjuntos
 		Map<String, Set<Integer>> client_sells_map = new TreeMap<String, Set<Integer>>();
 		Map<String, Map<String, Float>> clients_data_map = new HashMap<String, Map<String, Float>>();
-		
-		// Mapa de Ventas
 		try {
-			Reader lector = new FileReader(data_file_sells);
+			Reader lector = new FileReader(data_sells_file);
 			Iterable<CSVRecord> records = CSVFormat.RFC4180.parse(lector);
 			for (CSVRecord record : records) {
 				String rutcli = record.get(0);
@@ -84,8 +110,30 @@ public class ClusteringTest {
 				
 				clients_data_map.putIfAbsent(rutcli, new TreeMap<String, Float>());
 				Map<String, Float> products = clients_data_map.get(rutcli);
-				products.putIfAbsent(sku, 0.0f);
-				products.put(sku, products.get(sku) + cantidad);
+				
+				if( data_type == 1 ){
+					// Version 1: Sku directo
+					products.putIfAbsent(sku, 0.0f);
+					products.put(sku, products.get(sku) + cantidad);
+				}
+				else if(data_type == 2){
+					// Version 2: Codjer
+					if( ! products_map.containsKey(sku) ){
+						continue;
+					}
+					String key = products_map.get(sku).getCodjer();
+					if( key == null || key.length() < 1 ){
+						continue;
+					}
+					products.putIfAbsent(key, 0.0f);
+					products.put(sku, products.get(key) + cantidad);
+				}
+				else{
+					System.err.println("Unknown Data Type " + data_type);
+					break;
+				}
+				
+				// Version 3: Descripciones (texto)
 				
 			}
 			lector.close();
@@ -98,15 +146,29 @@ public class ClusteringTest {
 		for( Map.Entry<String, Set<Integer>> client_pair : client_sells_map.entrySet() ){
 			String rut = client_pair.getKey();
 			Set<Integer> sells = client_pair.getValue();
-			System.out.println("Compras de cliente " + rut + " (" + sells.size() + ")");
+//			System.out.println("Compras de cliente " + rut + " (" + sells.size() + ")");
 			Map<String, Float> products = clients_data_map.get(rut);
 			for( Map.Entry<String, Float> prod : products.entrySet() ){
 				prod.setValue( prod.getValue() / sells.size());
-				System.out.println(prod.getKey() + " : " + prod.getValue());
+//				System.out.println(prod.getKey() + " : " + prod.getValue());
 			}
 		}
 		
+		// Vuelco los datos en una lista
+		List<Data> data = new ArrayList<Data>();
+		for( Map.Entry<String, Map<String, Float>> data_pair : clients_data_map.entrySet() ){
+			String rut = data_pair.getKey();
+			Map<String, Float> products = data_pair.getValue();
+			// Filtrar clientes con muy pocas compras
+			if( client_sells_map.get(rut).size() < min_compras || products.size() < min_productos ){
+				continue;
+			}
+			data.add(new DataMapStringFloat(rut, products));
+		}
 		
+		Distance dist = new SpecialMapsDistance();
+		Clustering clustering = new ClusteringClarans(sampling);
+		clustering.execute(data, dist);
 		
 		
 		
