@@ -128,12 +128,29 @@ public class ClusteringTest {
 					products.putIfAbsent(key, 0.0f);
 					products.put(sku, products.get(key) + cantidad);
 				}
+				else if(data_type == 3){
+					// Version 3: Descripciones (texto)
+					if( ! products_map.containsKey(sku) ){
+						continue;
+					}
+					Product prod = products_map.get(sku);
+					if( prod.getNombre() == null ){
+						continue;
+					}
+					String terms[] = prod.getNombre().split(" ");
+					for(String term : terms){
+						if( term == null || term.length() < 1 ){
+							continue;
+						}
+						products.putIfAbsent(term, 0.0f);
+						products.put(sku, products.get(term) + 1);
+					}
+				}
 				else{
 					System.err.println("Unknown Data Type " + data_type);
 					break;
 				}
 				
-				// Version 3: Descripciones (texto)
 				
 			}
 			lector.close();
@@ -167,7 +184,8 @@ public class ClusteringTest {
 		}
 		
 //		Distance dist = new SpecialMapsDistance();
-		Distance dist = new JaccardDistance();
+//		Distance dist = new JaccardDistance();
+		Distance dist = new CosineDistance();
 		
 		Clustering clustering = new ClusteringClarans(sampling);
 		clustering.execute(data, dist);
