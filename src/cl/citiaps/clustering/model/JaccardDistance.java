@@ -33,7 +33,7 @@ public class JaccardDistance implements Distance {
 		}
 		double res = inter_size;
 		res /= keys.size();
-		return res;
+		return (1.0 - res);
 	}
 	
 }
