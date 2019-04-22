@@ -33,8 +33,8 @@ public class ClusteringTest {
 	
 	public static void main(String[] args) {
 		
-		int min_compras = 6;
-		int min_productos = 6;
+		int min_compras = 5;
+		int min_productos = 5;
 		int sampling = 1000000;
 		int data_type = 1;
 		
@@ -166,7 +166,9 @@ public class ClusteringTest {
 			data.add(new DataMapStringFloat(rut, products));
 		}
 		
-		Distance dist = new SpecialMapsDistance();
+//		Distance dist = new SpecialMapsDistance();
+		Distance dist = new JaccardDistance();
+		
 		Clustering clustering = new ClusteringClarans(sampling);
 		clustering.execute(data, dist);
 		
