@@ -11,7 +11,7 @@ public class CosineDistance implements Distance {
 	public double compute(Data o1, Data o2){
 		if( ! (o1 instanceof DataMapStringFloat)
 			|| ! (o2 instanceof DataMapStringFloat) ){
-			System.err.println("SpecialMapsDistance.compute - Wrong Data Type");
+			System.err.println("CosineDistance.compute - Wrong Data Type");
 			return 0.0;
 		}
 		Map<String, Float> map_1 = ((DataMapStringFloat)o1).getData();
