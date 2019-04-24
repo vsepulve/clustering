@@ -138,12 +138,26 @@ public class ClusteringTest {
 						continue;
 					}
 					String terms[] = prod.getNombre().split(" ");
+					boolean first = true;
 					for(String term : terms){
 						if( term == null || term.length() < 1 ){
 							continue;
 						}
+						// Omito terminos con numeros o simbolos
+						if( ! term.matches("[A-Za-z]+") ){
+							continue;
+						}
+//						System.out.println("Agregando " + term + " (first? " + first + ")");
 						products.putIfAbsent(term, 0.0f);
-						products.put(sku, products.get(term) + 1);
+//						products.put(term, products.get(term) + 1);
+						// Ajuste de peso para potenciar el PRIMER termino de cada descripcion
+						if(first){
+							products.put(term, products.get(term) + 3);
+							first = false;
+						}
+						else{
+							products.put(term, products.get(term) + 1);
+						}
 					}
 				}
 				else{
@@ -186,18 +200,11 @@ public class ClusteringTest {
 //		Distance dist = new SpecialMapsDistance();
 //		Distance dist = new JaccardDistance();
 		Distance dist = new CosineDistance();
+//		Distance dist = new BM25Distance(data);
 		
-		Clustering clustering = new ClusteringClarans(sampling);
-		clustering.execute(data, dist);
-		
-		
-		
-		
-		
-		
-		
-		
-		
+		// Antes de realizar un verdadero clustering revisare las distribuciones de distancia
+		DistancesDistributionAnalyzer distribution = new DistancesDistributionAnalyzer(sampling);
+		distribution.execute(data, dist);
 		
 		
 		
