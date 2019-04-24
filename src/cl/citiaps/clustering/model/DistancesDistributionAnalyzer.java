@@ -49,7 +49,7 @@ public class DistancesDistributionAnalyzer {
 		System.out.println("Normalizando en [" + min + ", " + max + "]");
 		final double fixed_min = min;
 		final double fixed_max = max;
-		distancias.replaceAll( d -> (1.0 - (d-fixed_min)/(fixed_max-fixed_min)) );
+		distancias.replaceAll( d -> (d-fixed_min)/(fixed_max-fixed_min) );
 		
 		// Generacion del histograma
 		for( double d : distancias ){
